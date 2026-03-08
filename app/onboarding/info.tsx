@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function InfoScreen() {
   const router = useRouter();
-  const violetBottom = require('../../assets/images/violet2.png');
+  const violetBottom = require('../../assets/images/vague_m1.png');
 
   return (
     <View style={styles.background}>
@@ -63,7 +63,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: '100%',
     width: '100%',
     zIndex: 0,
   },

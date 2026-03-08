@@ -2,33 +2,24 @@ import { NextButton } from '@/components/onboarding/next-button';
 import { UnisColors } from '@/constants/unis-theme';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SvgUri } from 'react-native-svg';
+import LogoFonce from '../../assets/images/logo_fonce.svg';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const logoAsset = Image.resolveAssetSource(require('../../assets/images/logo_fonce.svg'));
-  const violetTop = require('../../assets/images/violet1.png');
-  const violetBottom = require('../../assets/images/violet2.png');
-  const screenHeight = Dimensions.get('window').height;
-  const topHeight = Math.round(screenHeight * 0.55);
-  const bottomHeight = Math.round(screenHeight * 0.45);
 
   return (
-    <View style={styles.background}>
-      <Image source={violetTop} style={[styles.violetTop, { height: topHeight }]} resizeMode="stretch" />
-      <Image
-        source={violetBottom}
-        style={[styles.violetBottom, { height: bottomHeight }]}
-        resizeMode="stretch"
-      />
-
+    <ImageBackground
+      source={require('../../assets/images/vague_hb.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           {/* Logo central */}
           <View style={styles.logoSection}>
-            {logoAsset?.uri ? <SvgUri width={120} height={120} uri={logoAsset.uri} /> : null}
+            <LogoFonce width={120} height={120} />
             <Text style={styles.appName}>Bienvenue dans</Text>
             <Text style={styles.appName}>UNIS</Text>
           </View>
@@ -39,34 +30,16 @@ export default function WelcomeScreen() {
           <NextButton onPress={() => router.push('/onboarding/info')} />
         </View>
       </SafeAreaView>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    zIndex: 1,
   },
   background: {
     flex: 1,
-    backgroundColor: UnisColors.background,
-  },
-  violetTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    width: '100%',
-    zIndex: 0,
-  },
-  violetBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    width: '100%',
-    zIndex: 0,
   },
   content: {
     flex: 1,

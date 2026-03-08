@@ -7,16 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ChooseSpaceScreen() {
   const router = useRouter();
-  const violetTop = require('../../assets/images/violet1.png');
+  const violetTop = require('../../assets/images/vague_h2.png');
 
   const handleChooseSevrage = () => {
-    // TODO: Sauvegarder le choix et naviguer vers l'espace sevrage
-    console.log('Espace sevrage sélectionné');
+    router.replace('/(sevrage)/espace');
   };
 
   const handleChooseAccompagne = () => {
-    // TODO: Sauvegarder le choix et naviguer vers l'espace accompagnant
-    console.log('Espace accompagnant sélectionné');
+    router.replace('/(accompagnant)/espace');
   };
 
   return (
