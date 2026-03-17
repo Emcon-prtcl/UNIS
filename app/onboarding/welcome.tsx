@@ -1,13 +1,21 @@
 import { NextButton } from '@/components/onboarding/next-button';
 import { UnisColors } from '@/constants/unis-theme';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LogoFonce from '../../assets/images/logo_fonce.svg';
+import { getAuthToken } from '../../store/auth';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (token) {
+      router.replace('/(sevrage)/(tabs)/accueil');
+    }
+  }, []);
 
   return (
     <ImageBackground

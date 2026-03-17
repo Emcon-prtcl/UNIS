@@ -29,6 +29,7 @@ export default function PartageScreen() {
   const handleJoin = () => {
     // TODO: Continuer le parcours
     console.log('Rejoindre UNIS');
+    router.dismissAll();
     router.replace('/(sevrage)/(tabs)/accueil');
   };
 

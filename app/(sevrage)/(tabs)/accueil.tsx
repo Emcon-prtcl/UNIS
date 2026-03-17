@@ -1,10 +1,20 @@
 import { UnisColors } from '@/constants/unis-theme';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import React from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AccueilScreen() {
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => true;
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [])
+  );
+
   return (
     <View style={styles.background}>
       <SafeAreaView style={styles.safeArea}>

@@ -1,9 +1,10 @@
 import { NextButton } from '@/components/onboarding/next-button';
 import { UnisColors } from '@/constants/unis-theme';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getAuthToken } from '../../store/auth';
 
 const FEATURE_ICONS = [
   require('../../assets/images/espace1.png'),
@@ -45,6 +46,13 @@ export default function EspaceSevrageScreen() {
   const router = useRouter();
   const violetBottom = require('../../assets/images/vague_m1.png');
 
+  useEffect(() => {
+    const token = getAuthToken();
+    if (token) {
+      router.replace('/(sevrage)/(tabs)/accueil');
+    }
+  }, []);
+
   return (
     <View style={styles.background}>
       <Image source={violetBottom} style={styles.violetBottom} resizeMode="stretch" />
@@ -73,7 +81,7 @@ export default function EspaceSevrageScreen() {
 
         {/* Bouton suivant */}
         <View style={styles.bottomSection}>
-          <NextButton onPress={() => router.push('/(sevrage)/inscription')} />
+          <NextButton onPress={() => router.push('/(sevrage)/login')} />
         </View>
       </SafeAreaView>
     </View>

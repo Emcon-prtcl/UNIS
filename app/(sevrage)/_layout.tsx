@@ -10,9 +10,10 @@ export default function SevrageLayout() {
       }}
     >
       <Stack.Screen name="espace" />
+      <Stack.Screen name="login" />
       <Stack.Screen name="inscription" />
       <Stack.Screen name="partage" />
-      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="mon-statut" />
       <Stack.Screen name="mon-journal" />
       <Stack.Screen name="aujourdhui" />

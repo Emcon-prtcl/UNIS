@@ -1,42 +1,31 @@
-import { NextButton } from '@/components/onboarding/next-button';
 import { API_URL } from '@/constants/config';
 import { UnisColors } from '@/constants/unis-theme';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getAuthToken, setAuthTokens } from '../../store/auth';
+import { setAuthTokens } from '../../store/auth';
 
-
-export default function InscriptionScreen() {
+export default function LoginScreen() {
   const router = useRouter();
-  const [prenom, setPrenom] = useState('');
-  const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const token = getAuthToken();
-    if (token) {
-      router.replace('/(sevrage)/(tabs)/accueil');
-    }
-  }, []);
-
   const getErrorMessage = (data: any, status: number) => {
-    if (status === 409) {
-      return "Cette adresse e-mail existe déjà.";
+    if (status === 401 || status === 400) {
+      return 'Email ou mot de passe incorrect.';
     }
 
     const apiMessage =
@@ -47,7 +36,7 @@ export default function InscriptionScreen() {
 
     return typeof apiMessage === 'string' && apiMessage.trim().length > 0
       ? apiMessage
-      : "L'inscription a échoué. Veuillez réessayer.";
+      : 'La connexion a échoué. Veuillez réessayer.';
   };
 
   const getTokensFromResponse = (data: any) => {
@@ -73,17 +62,15 @@ export default function InscriptionScreen() {
     };
   };
 
-  const handleNext = async () => {
+  const handleLogin = async () => {
     if (isSubmitting) {
       return;
     }
 
-    const trimmedPrenom = prenom.trim();
-    const trimmedNom = nom.trim();
     const trimmedEmail = email.trim().toLowerCase();
 
-    if (!trimmedPrenom || !trimmedNom || !trimmedEmail || !password || !confirmPassword) {
-      Alert.alert('Champs requis', 'Merci de remplir tous les champs.');
+    if (!trimmedEmail || !password) {
+      Alert.alert('Champs requis', 'Merci de saisir votre email et votre mot de passe.');
       return;
     }
 
@@ -93,27 +80,15 @@ export default function InscriptionScreen() {
       return;
     }
 
-    if (password.length < 8) {
-      Alert.alert('Mot de passe', 'Le mot de passe doit contenir au moins 8 caractères.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Mot de passe', 'Les mots de passe ne correspondent pas.');
-      return;
-    }
-
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`${API_URL}/auth/malade/register`, {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prenom: trimmedPrenom,
-          nom: trimmedNom,
           email: trimmedEmail,
           password,
         }),
@@ -127,24 +102,25 @@ export default function InscriptionScreen() {
       }
 
       if (!response.ok) {
-        Alert.alert('Inscription impossible', getErrorMessage(data, response.status));
+        Alert.alert('Connexion échouée', getErrorMessage(data, response.status));
         return;
       }
 
       const { jwt, refreshToken } = getTokensFromResponse(data);
       if (!jwt || !refreshToken) {
         Alert.alert(
-          'Inscription incomplète',
-          "Le compte a été créé mais les tokens d'authentification sont manquants."
+          'Connexion incomplète',
+          "L'authentification a échoué : tokens manquants."
         );
         return;
       }
 
       setAuthTokens(jwt, refreshToken);
-      router.replace('/(sevrage)/partage');
+      router.dismissAll();
+      router.replace('/(sevrage)/(tabs)/accueil');
     } catch (error) {
-      console.error('Erreur lors de l\'inscription :', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer plus tard.');
+      console.error('Erreur lors de la connexion :', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion. Veuillez réessayer plus tard.');
     } finally {
       setIsSubmitting(false);
     }
@@ -168,27 +144,9 @@ export default function InscriptionScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Titre */}
-            <Text style={styles.title}>Crée ton compte</Text>
+            <Text style={styles.title}>Connexion</Text>
 
-            {/* Formulaire */}
             <View style={styles.form}>
-              <TextInput
-                style={styles.input}
-                placeholder="Prénom"
-                placeholderTextColor={UnisColors.purple.medium}
-                value={prenom}
-                onChangeText={setPrenom}
-                autoCapitalize="words"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Nom"
-                placeholderTextColor={UnisColors.purple.medium}
-                value={nom}
-                onChangeText={setNom}
-                autoCapitalize="words"
-              />
               <TextInput
                 style={styles.input}
                 placeholder="Adresse mail"
@@ -197,6 +155,7 @@ export default function InscriptionScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={!isSubmitting}
               />
               <TextInput
                 style={styles.input}
@@ -205,22 +164,29 @@ export default function InscriptionScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Confirmation mot de passe"
-                placeholderTextColor={UnisColors.purple.medium}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
+                editable={!isSubmitting}
               />
             </View>
-          </ScrollView>
 
-          {/* Bouton suivant */}
-          <View style={styles.bottomSection}>
-            <NextButton onPress={handleNext} />
-          </View>
+            <Pressable
+              style={[styles.loginButton, isSubmitting && styles.loginButtonDisabled]}
+              onPress={handleLogin}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.loginButtonText}>
+                {isSubmitting ? 'Connexion...' : 'Se connecter'}
+              </Text>
+            </Pressable>
+
+            <View style={styles.divider} />
+
+            <View style={styles.signupPrompt}>
+              <Text style={styles.signupText}>Je n'ai pas de compte</Text>
+              <Pressable onPress={() => router.push('/(sevrage)/inscription')}>
+                <Text style={styles.signupLink}>Créer un compte</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -249,6 +215,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 28,
     paddingTop: 40,
+    paddingBottom: 20,
   },
   title: {
     fontSize: 30,
@@ -259,6 +226,7 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 16,
+    marginBottom: 24,
   },
   input: {
     borderWidth: 2,
@@ -271,9 +239,41 @@ const styles = StyleSheet.create({
     color: UnisColors.purple.dark,
     backgroundColor: UnisColors.white,
   },
-  bottomSection: {
-    paddingBottom: 40,
-    paddingHorizontal: 24,
-    paddingTop: 16,
+  loginButton: {
+    backgroundColor: UnisColors.purple.dark,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  loginButtonDisabled: {
+    opacity: 0.6,
+  },
+  loginButtonText: {
+    color: UnisColors.white,
+    fontSize: 18,
+    fontFamily: 'TitleWrap',
+    fontWeight: '700',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: UnisColors.purple.veryLight,
+    marginBottom: 24,
+  },
+  signupPrompt: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  signupText: {
+    fontSize: 14,
+    fontFamily: 'Inter',
+    color: UnisColors.purple.medium,
+  },
+  signupLink: {
+    fontSize: 16,
+    fontFamily: 'TitleWrap',
+    fontWeight: '700',
+    color: UnisColors.purple.dark,
+    textDecorationLine: 'underline',
   },
 });
