@@ -1,6 +1,7 @@
 import { UnisColors } from '@/constants/unis-theme';
+import { JournalApiEntry, getMyJournalById, listMyJournals } from '@/store/journal-api';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +25,99 @@ LocaleConfig.defaultLocale = 'fr';
 export default function MonJournalScreen() {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   const [selectedDate, setSelectedDate] = useState(today);
+  const [journals, setJournals] = useState<JournalApiEntry[]>([]);
+  const [selectedJournal, setSelectedJournal] = useState<JournalApiEntry | null>(null);
+
+  const formattedSelectedDate = useMemo(() => {
+    const parsed = new Date(selectedDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return selectedDate;
+    }
+    return parsed.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [selectedDate]);
+
+  useEffect(() => {
+    const loadJournals = async () => {
+      try {
+        const list = await listMyJournals();
+        setJournals(list);
+      } catch (error) {
+        console.error('Erreur chargement journaux:', error);
+      }
+    };
+
+    loadJournals();
+  }, []);
+
+  const journalsByDate = useMemo(() => {
+    const map: Record<string, JournalApiEntry> = {};
+
+    for (const journal of journals) {
+      const dateKey = (journal.date || '').split('T')[0];
+      if (dateKey) {
+        map[dateKey] = journal;
+      }
+    }
+
+    return map;
+  }, [journals]);
+
+  const markedDates = useMemo(() => {
+    const marks: Record<string, any> = {};
+
+    Object.keys(journalsByDate).forEach((dateKey) => {
+      marks[dateKey] = {
+        marked: true,
+        dotColor: UnisColors.purple.dark,
+      };
+    });
+
+    marks[today] = {
+      ...(marks[today] || {}),
+      selected: true,
+      selectedColor: selectedDate === today ? UnisColors.purple.dark : UnisColors.purple.light,
+      selectedTextColor: UnisColors.white,
+    };
+
+    if (selectedDate !== today) {
+      marks[selectedDate] = {
+        ...(marks[selectedDate] || {}),
+        selected: true,
+        selectedColor: UnisColors.purple.light,
+        selectedTextColor: UnisColors.white,
+      };
+    }
+
+    return marks;
+  }, [journalsByDate, selectedDate, today]);
+
+  const handleSelectDate = async (dateString: string) => {
+    setSelectedDate(dateString);
+
+    const found = journalsByDate[dateString];
+    if (!found?.id) {
+      setSelectedJournal(null);
+      return;
+    }
+
+    if (selectedJournal?.id === found.id) {
+      setSelectedJournal(null);
+      return;
+    }
+
+    try {
+      const detail = await getMyJournalById(found.id);
+      setSelectedJournal(detail);
+    } catch (error) {
+      console.error('Erreur détail journal:', error);
+      setSelectedJournal(found);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -43,23 +137,8 @@ export default function MonJournalScreen() {
           <View style={styles.calendarCard}>
             <Calendar
               firstDay={1}
-              onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
-              markedDates={{
-                [today]: {
-                  selected: true,
-                  selectedColor: UnisColors.purple.dark,
-                  selectedTextColor: UnisColors.white,
-                },
-                ...(selectedDate !== today
-                  ? {
-                      [selectedDate]: {
-                        selected: true,
-                        selectedColor: UnisColors.purple.light,
-                        selectedTextColor: UnisColors.white,
-                      },
-                    }
-                  : {}),
-              }}
+              onDayPress={(day: { dateString: string }) => handleSelectDate(day.dateString)}
+              markedDates={markedDates}
               theme={{
                 backgroundColor: 'transparent',
                 calendarBackground: 'transparent',
@@ -83,6 +162,47 @@ export default function MonJournalScreen() {
               style={{ borderRadius: 16 }}
             />
           </View>
+
+          {selectedJournal && (
+            <View style={styles.entryCard}>
+              <Text style={styles.entryTitle}>Journal du {formattedSelectedDate}</Text>
+
+              <View style={styles.entryBlock}>
+                <Text style={styles.entryLabel}>Verres consommés</Text>
+                <Text style={styles.entryValue}>{selectedJournal.glasses ?? 0}</Text>
+              </View>
+
+              <View style={styles.entryBlock}>
+                <Text style={styles.entryLabel}>Difficulté</Text>
+                <Text style={styles.entryValue}>{selectedJournal.difficulty || '—'}</Text>
+              </View>
+
+              <View style={styles.entryBlock}>
+                <Text style={styles.entryLabel}>Humeur du jour</Text>
+                {selectedJournal.moods.length > 0 ? (
+                  <View style={styles.moodPills}>
+                    {selectedJournal.moods.map((mood, index) => (
+                      <View key={`${mood}-${index}`} style={styles.moodPill}>
+                        <Text style={styles.moodPillText}>{mood}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.entryValue}>—</Text>
+                )}
+              </View>
+
+              <View style={styles.entryBlock}>
+                <Text style={styles.entryLabel}>Activité</Text>
+                <Text style={styles.entryValue}>{selectedJournal.activity || selectedJournal.motivation || '—'}</Text>
+              </View>
+
+              <View style={styles.entryBlock}>
+                <Text style={styles.entryLabel}>Notes personnelles</Text>
+                <Text style={styles.entryValue}>{selectedJournal.notes || selectedJournal.noteLibre || '—'}</Text>
+              </View>
+            </View>
+          )}
 
           {/* Aujourd'hui button */}
           <Pressable style={styles.todayButton} onPress={() => router.push('/(sevrage)/aujourdhui')}>
@@ -156,6 +276,59 @@ const styles = StyleSheet.create({
     borderColor: UnisColors.yellow.medium,
     padding: 16,
     marginBottom: 24,
+  },
+  entryCard: {
+    backgroundColor: UnisColors.white,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: UnisColors.purple.veryLight,
+    padding: 16,
+    marginBottom: 20,
+    gap: 10,
+  },
+  entryTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    fontFamily: 'TitleWrap',
+    color: UnisColors.purple.dark,
+    marginBottom: 6,
+  },
+  entryBlock: {
+    backgroundColor: UnisColors.purple.veryLight,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  entryLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter',
+    fontWeight: '700',
+    color: UnisColors.purple.medium,
+    marginBottom: 4,
+  },
+  entryValue: {
+    fontSize: 14,
+    fontFamily: 'Inter',
+    color: UnisColors.purple.dark,
+    lineHeight: 20,
+  },
+  moodPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  moodPill: {
+    backgroundColor: UnisColors.white,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: UnisColors.purple.light,
+  },
+  moodPillText: {
+    fontSize: 12,
+    fontFamily: 'Inter',
+    color: UnisColors.purple.dark,
   },
   /* Aujourd'hui button */
   todayButton: {

@@ -1,17 +1,36 @@
 import { UnisColors } from '@/constants/unis-theme';
-import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import React from 'react';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 import { BackHandler, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getDaysSinceInscription, getUserName, refreshUserFromMe } from '../../../store/auth';
 
 export default function AccueilScreen() {
+  const [userName, setUserName] = useState(getUserName());
+  const [days, setDays] = useState(getDaysSinceInscription());
+
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => true;
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-      return () => subscription.remove();
+      let isActive = true;
+
+      const loadUserName = async () => {
+        await refreshUserFromMe();
+        if (isActive) {
+          setUserName(getUserName());
+          setDays(getDaysSinceInscription());
+        }
+      };
+
+      loadUserName();
+
+      return () => {
+        isActive = false;
+        subscription.remove();
+      };
     }, [])
   );
 
@@ -20,7 +39,9 @@ export default function AccueilScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <Text style={styles.greeting}>Salut Sophia !</Text>
+            <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
+              Salut {userName} !
+            </Text>
             <View style={styles.headerIcons}>
               <Pressable style={styles.iconCircle} onPress={() => router.push('/(sevrage)/messagerie')}>
                 <Image
@@ -54,7 +75,7 @@ export default function AccueilScreen() {
         >
           <View style={styles.panel}>
             <View style={styles.dayCard}>
-              <Text style={styles.dayNumber}>10</Text>
+              <Text style={styles.dayNumber}>{days}</Text>
               <Text style={styles.dayLabel}>Jour de parcours</Text>
             </View>
 
@@ -91,22 +112,27 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    zIndex: 3,
+    zIndex: 1,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minWidth: 0,
   },
   greeting: {
-    fontSize: 38,
+    fontSize: 30,
     fontWeight: '800',
     fontFamily: 'TitleWrap',
     color: UnisColors.purple.dark,
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 12,
   },
   headerIcons: {
     flexDirection: 'row',
     gap: 10,
+    flexShrink: 0,
   },
   iconCircle: {
     width: 32,
@@ -143,7 +169,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 2,
+    zIndex: 3,
   },
   scrollContent: {
     flexGrow: 1,

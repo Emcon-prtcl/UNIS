@@ -3,16 +3,16 @@ import { UnisColors } from '@/constants/unis-theme';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { setAuthTokens } from '../../store/auth';
@@ -115,7 +115,12 @@ export default function LoginScreen() {
         return;
       }
 
-      setAuthTokens(jwt, refreshToken);
+      // Extract user info from login response or set defaults
+      const prenom = data?.prenom || data?.user?.prenom || '';
+      const nom = data?.nom || data?.user?.nom || '';
+
+      setAuthTokens(jwt, refreshToken, prenom, nom);
+      console.log(jwt, refreshToken, prenom, nom);
       router.dismissAll();
       router.replace('/(sevrage)/(tabs)/accueil');
     } catch (error) {
