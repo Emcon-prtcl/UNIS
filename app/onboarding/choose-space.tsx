@@ -15,8 +15,8 @@ export default function ChooseSpaceScreen() {
   };
 
   const handleChooseAccompagne = () => {
-    // TODO: Sauvegarder le choix et naviguer vers l'espace accompagnant
-    console.log('Espace accompagnant sélectionné');
+    // Navigue vers l'espace accompagnant (page créée `espace_proche4`)
+    router.push('/espace_proche4');
   };
 
   return (
