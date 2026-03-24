@@ -1,10 +1,11 @@
+import { AvatarProvider } from '@/constants/Avatarcontent';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 export default function RootLayout() {
   return (
-    <>
+    <AvatarProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
@@ -12,6 +13,6 @@ export default function RootLayout() {
         <Stack.Screen name="(accompagnant)" />
       </Stack>
       <StatusBar style="dark" />
-    </>
+    </AvatarProvider>
   );
 }
