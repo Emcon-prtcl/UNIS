@@ -140,7 +140,7 @@ export default function InscriptionScreen() {
         return;
       }
 
-      setAuthTokens(jwt, refreshToken);
+      setAuthTokens(jwt, refreshToken, trimmedPrenom, trimmedNom);
       router.replace('/(sevrage)/partage');
     } catch (error) {
       console.error('Erreur lors de l\'inscription :', error);

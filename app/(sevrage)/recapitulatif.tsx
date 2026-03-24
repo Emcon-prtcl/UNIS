@@ -1,15 +1,17 @@
 import { UnisColors } from '@/constants/unis-theme';
 import { journalStore } from '@/store/journal';
+import { createMyJournal, getTodayJournal, updateMyJournal } from '@/store/journal-api';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
+    Alert,
     Pressable,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const difficultyLabels: Record<string, { icon: string; label: string }> = {
   very_easy:       { icon: '🛡️', label: 'Très facile' },
@@ -54,9 +56,35 @@ function formatDateFR(date: Date): string {
 
 export default function RecapitulatifScreen() {
   const entry = journalStore;
+  const [isSaving, setIsSaving] = useState(false);
   const diff = entry.difficulty ? difficultyLabels[entry.difficulty] : null;
   const selectedMoods = entry.moods.map((k) => moodOptions[k]).filter(Boolean);
   const dateStr = formatDateFR(new Date());
+
+  const handleSaveJournal = async () => {
+    if (isSaving) {
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const todayJournal = await getTodayJournal();
+
+      if (todayJournal?.id) {
+        await updateMyJournal(todayJournal.id, entry);
+      } else {
+        await createMyJournal(entry);
+      }
+
+      router.replace('/(sevrage)/(tabs)/accueil');
+    } catch (error) {
+      console.error('Erreur enregistrement journal:', error);
+      Alert.alert('Erreur', "Impossible d'enregistrer le journal pour le moment.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -119,9 +147,12 @@ export default function RecapitulatifScreen() {
         <View style={styles.footer}>
           <Pressable
             style={styles.backCalButton}
-            onPress={() => router.push('/(sevrage)/(tabs)/accueil')}
+            onPress={handleSaveJournal}
+            disabled={isSaving}
           >
-            <Text style={styles.backCalText}>Enregistrer dans le journal</Text>
+            <Text style={styles.backCalText}>
+              {isSaving ? 'Enregistrement...' : 'Enregistrer dans le journal'}
+            </Text>
           </Pressable>
         </View>
       </SafeAreaView>
