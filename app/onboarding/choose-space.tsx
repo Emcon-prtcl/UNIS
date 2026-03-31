@@ -14,7 +14,7 @@ export default function ChooseSpaceScreen() {
   };
 
   const handleChooseAccompagne = () => {
-    router.replace('/(accompagnant)/espace');
+    router.replace('/(accompagnant)/espace_proche4');
   };
 
   return (
